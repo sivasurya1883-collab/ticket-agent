@@ -1,80 +1,73 @@
-# Multi-Agent Ticket Resolution Chat App
+# React + TypeScript + Vite
 
-## What this is
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-A Streamlit chat app that uses LangGraph to orchestrate a multi-agent workflow for login-related support tickets.
+Currently, two official plugins are available:
 
-- **Conversation agent**: detects login/auth issues and drafts a ticket.
-- **Ticket resolution agent**: looks for similar closed tickets (your history first, then other users), otherwise asks clarifying questions or generates a new solution.
-- **Similarity search**: OpenAI-compatible embeddings + in-memory FAISS.
-- **Database**: Supabase Postgres tables `users` and `tickets`.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Project layout
+## React Compiler
 
-- `app.py` Streamlit UI (login + chat + sidebar)
-- `support_app/`
-  - `config.py` env loading + settings
-  - `db.py` Supabase data access for `users` / `tickets`
-  - `llm.py` OpenAI-compatible LLM + embeddings
-  - `agents.py` conversation + resolution prompt logic (structured outputs)
-  - `similarity.py` FAISS similarity index over closed tickets
-  - `graph.py` LangGraph orchestration (nodes + flow)
-- `supabase/schema.sql` table DDL
-- `supabase/seed.sql` mock data (15 users, 45 tickets)
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Supabase setup
+## Expanding the ESLint configuration
 
-1. Create a Supabase project.
-2. In **SQL Editor**, run:
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-- `supabase/schema.sql`
-- `supabase/seed.sql`
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-This seeds users and tickets (mix of `Open`, `In Progress`, and `Closed`).
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-## Environment variables
-
-Create a `.env` file in the repo root (or set env vars in your shell):
-
-- `SUPABASE_URL`
-- `SUPABASE_KEY`
-- `OPENAI_API_KEY`
-
-Optional:
-
-- `OPENAI_BASE_URL` (if using an OpenAI-compatible gateway)
-- `OPENAI_MODEL` (default: `gpt-4o-mini`)
-- `OPENAI_EMBEDDINGS_MODEL` (default: `text-embedding-3-large`)
-- `SIMILARITY_THRESHOLD` (FAISS distance threshold, default `0.82`; lower is stricter)
-
-## Install + run
-
-Python 3.11+
-
-```bash
-pip install -r requirements.txt
-streamlit run app.py
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-Then login using any seeded user, for example:
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-- `aisha.khan` / `Pass@123`
-- `rohan.sharma` / `Welcome@123`
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-## Trigger mechanism (Supabase trigger simulation)
-
-This implementation uses **direct invocation inside the LangGraph flow**:
-
-- When the conversation agent decides a ticket is needed, the graph runs `ticket_creation_node` which inserts into Supabase.
-- Immediately after insert, the graph proceeds to `ticket_resolution_agent` + `similarity_check` and returns a solution back to the conversation.
-
-This provides a deterministic “trigger-like” behavior without needing DB triggers/webhooks.
-
-### Optional polling mode (future)
-
-If you want a more realistic async trigger:
-
-- Run a background polling worker that periodically queries `tickets` where `status='Open'`.
-- For each ticket, run the resolution sub-graph and update the ticket to `Closed`.
-
-(Worker not implemented yet in this repo.)
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
